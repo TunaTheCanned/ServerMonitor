@@ -36,10 +36,13 @@ def get_cpu_times():
     return payload
 
 def get_hardware_temperature():
-    if psutil.WINDOWS:
+    if not hasattr(psutil, "sensors_temperatures"):
         return { "available" : False, "reason" : "Not supported on this OS" }
-    if psutil.LINUX:
-        data = psutil.sensors_temperatures(fahrenheit=False)
+    elif hasattr(psutil, "sensors_temperatures"):
+        try:
+            data = psutil.sensors_temperatures(fahrenheit=False)
+        except (PermissionError, OSError, RuntimeError) as e:
+            return { "available" : False, "reason" : f"Failed to read temperature sensors: {e}" }
         if not data:
             return {"available" : False, "reason" : "No temperature sensor detected" }
         payload = {}
