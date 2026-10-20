@@ -1,5 +1,5 @@
 from app import metrics
-from flask import request, jsonify
+from flask import request
 
 
 def registered_routes(app):
@@ -7,9 +7,8 @@ def registered_routes(app):
     #HEALTH
     @app.route("/api/v1/health")
     def health_check():
-        db_status = "healthy"
-        status = "healthy" if db_status == "healthy" else "unhealthy"
-        return jsonify({"overall": status, "database": db_status}), 200
+        return metrics.health_check(), 200
+
 
     #CPU
     @app.route("/api/v1/cpu-usage", methods=['GET'])
@@ -33,16 +32,19 @@ def registered_routes(app):
         return metrics.get_hardware_temperature(), 200
 
 
+
     #RAM
     @app.route("/api/v1/memory", methods=['GET'])
     def get_memory():
         return metrics.get_memory(), 200
 
 
+
     #DISK
     @app.route("/api/v1/disk", methods=['GET'])
     def get_disk():
         return metrics.get_disk(), 200
+
 
 
     #CORES
@@ -60,5 +62,24 @@ def registered_routes(app):
 
 
 
+    #SYSTEM
+    @app.route("/api/v1/uptime", methods=['GET'])
+    def get_uptime():
+        return metrics.get_system_uptime(), 200
+
+    @app.route("/api/v1/load", methods=['GET'])
+    def get_load():
+        return metrics.get_load(), 200
+
+    @app.route("/api/v1/system", methods=['GET'])
+    def get_system():
+        return metrics.get_system_info(), 200
+
+
+
+    #NETWORK
+    @app.route("/api/v1/network", methods=['GET'])
+    def get_network_io_stats():
+        return metrics.get_network_io_stats(), 200
 
 

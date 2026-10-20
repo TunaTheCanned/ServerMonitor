@@ -1,10 +1,10 @@
 import os
 import psutil
-
+import platform
 
 def get_cpu_usage_metrics(is_per_cpu):
     if is_per_cpu:
-        data = psutil.cpu_percent(interval=1, percpu=True)
+        data = psutil.cpu_percent(interval=0.1, percpu=True)
         payload = {}
         for i,metric in enumerate(data):
             payload[f"cpu{i}"] = {"percent":metric}
@@ -53,3 +53,40 @@ def get_hardware_temperature():
         return {"available" : True, "sensors" : payload}
     else:
         return {"available" : False, "reason" : "Not supported on this OS" }
+
+
+def get_system_uptime():
+    from datetime import datetime
+    boot_time = datetime.fromtimestamp(psutil.boot_time())
+    current_time = datetime.now()
+    uptime = current_time - boot_time
+    total_seconds = int(uptime.total_seconds())
+    days = total_seconds // 86400
+    hours = (total_seconds % 86400) // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    return {"uptime": f"{days}:{hours:02}:{minutes:02}:{seconds:02}"}
+
+
+def get_load():
+    load_1, load_5, load_15 = psutil.getloadavg()
+    return {"system load" : {"load_1" : load_1,
+                             "load_5" : load_5,
+                             "load_15" : load_15}}
+
+
+def get_network_io_stats():
+    return psutil.net_io_counters(False, True)._asdict()
+
+
+def get_system_info():
+    return {"system": platform.system(),
+            "version": platform.version(),
+            "architecture": platform.machine()}
+
+
+def health_check():
+    db_status = "healthy"
+    status = "healthy" if db_status == "healthy" else "unhealthy"
+    return ({"overall": status,
+            "database": db_status})
