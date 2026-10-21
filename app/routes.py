@@ -83,3 +83,7 @@ def registered_routes(app):
         return metrics.get_network_io_stats(), 200
 
 
+    #PROCESS
+    @app.route("/api/v1/processes", methods=['GET'])
+    def get_process_info():
+        return metrics.get_process_info(), 200

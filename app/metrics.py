@@ -90,3 +90,19 @@ def health_check():
     status = "healthy" if db_status == "healthy" else "unhealthy"
     return ({"overall": status,
             "database": db_status})
+
+
+def get_process_info():
+    payload = {}
+    for process in psutil.process_iter(['pid', 'name', 'status', 'memory_info'], ad_value=None):
+        try:
+            mem_info = process.info['memory_info']
+            if mem_info is not None:
+                rss = mem_info.rss
+            else:
+                rss = None
+            info = {"pid" : process.info['pid'], "name" : process.info['name'], "status" : process.info['status'], "rss_bytes" : rss}
+            payload[process.info['pid']] = info
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return {"processes" : payload}
