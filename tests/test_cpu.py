@@ -1,3 +1,4 @@
+
 def test_cpu_usage_empty(client):
     response = client.get('/api/v1/cpu-usage')
     assert response.status_code == 400

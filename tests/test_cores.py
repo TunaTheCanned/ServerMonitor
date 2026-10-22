@@ -1,3 +1,4 @@
+
 def test_cores_logical_empty(client):
     response = client.get('/api/v1/cores')
     assert response.status_code == 400

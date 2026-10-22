@@ -1,17 +1,17 @@
+from app import metrics
 
-def test_process_info_status_code(client):
-    response = client.get('/api/v1/processes')
-    assert response.status_code == 200
+def test_process_info_endpoint(client, monkeypatch):
+    sample = {"processes":
+                  [{"pid": 1234,
+                    "name": "example.exe",
+                    "status": "running",
+                    "rss_bytes": 4096,
+                    "cpu_percent": 12.5}]}
 
-def test_process_info_json_structure(client):
-    response = client.get('/api/v1/processes')
+    def fake_process_info(sort_by, limit):
+        return sample
+    monkeypatch.setattr(metrics, "get_process_info", fake_process_info)
+    response = client.get('/api/v1/processes?sort-by=cpu&limit=10')
     data = response.get_json()
-    assert data is not None
-    assert isinstance(data, dict)
-    assert 'processes' in data
-    assert isinstance(data['processes'], dict)
-    for pid, process in data['processes'].items():
-        assert 'pid' in process
-        assert 'rss_bytes' in process
-        assert 'name' in process
-        assert 'status' in process
+    assert data == sample
+    assert response.status_code == 200

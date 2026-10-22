@@ -1,11 +1,11 @@
+import time
 import psutil
 import platform
 
 #HEALTH
 def health_check():
-    db_status = "healthy"
-    status = "healthy" if db_status == "healthy" else "unhealthy"
-    return {"overall": status, "database": db_status}
+    status = "healthy"
+    return {"overall": status}
 
 
 #CPU
@@ -91,17 +91,42 @@ def get_network_io_stats():
 
 
 #PROCESS
-def get_process_info():
-    payload = {}
-    for process in psutil.process_iter(['pid', 'name', 'status', 'memory_info'], ad_value=None):
+def get_process_info(sort_by, limit):
+    processes = psutil.process_iter(['pid', 'name', 'status', 'memory_info'], ad_value=None)
+    payload = []
+    measurable_processes = []
+    for process in processes:
+        try:
+            process.cpu_percent(interval=None)
+            measurable_processes.append(process)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+
+    time.sleep(0.1)
+
+    for process in measurable_processes:
         try:
             mem_info = process.info['memory_info']
             if mem_info is not None:
                 rss = mem_info.rss
             else:
                 rss = None
-            info = {"pid" : process.info['pid'], "name" : process.info['name'], "status" : process.info['status'], "rss_bytes" : rss}
-            payload[process.info['pid']] = info
+            payload.append({"pid": process.info['pid'],
+                            "name": process.info['name'],
+                            "status": process.info['status'],
+                            "rss_bytes": rss,
+                            "cpu_percent": process.cpu_percent(interval=None)
+                            })
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass
+            continue
+
+    if sort_by=='cpu':
+        if psutil.WINDOWS:
+            payload = [process for process in payload if process['pid'] != 0]
+        payload.sort(key=lambda x: x['cpu_percent'], reverse=True)
+    elif sort_by=='memory':
+        payload.sort(key=lambda x: x['rss_bytes'], reverse=True)
+    if limit is not None:
+        payload = payload[:limit]
+
     return {"processes" : payload}

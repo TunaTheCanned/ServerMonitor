@@ -32,19 +32,16 @@ def registered_routes(app):
         return metrics.get_hardware_temperature(), 200
 
 
-
     #RAM
     @app.route("/api/v1/memory", methods=['GET'])
     def get_memory():
         return metrics.get_memory(), 200
 
 
-
     #DISK
     @app.route("/api/v1/disk", methods=['GET'])
     def get_disk():
         return metrics.get_disk(), 200
-
 
 
     #CORES
@@ -61,7 +58,6 @@ def registered_routes(app):
             return {'error' : "'logical' parameter must be 'true' or 'false'"}, 400
 
 
-
     #SYSTEM
     @app.route("/api/v1/uptime", methods=['GET'])
     def get_uptime():
@@ -76,14 +72,32 @@ def registered_routes(app):
         return metrics.get_system_info(), 200
 
 
-
     #NETWORK
     @app.route("/api/v1/network", methods=['GET'])
     def get_network_io_stats():
         return metrics.get_network_io_stats(), 200
 
 
+
     #PROCESS
     @app.route("/api/v1/processes", methods=['GET'])
     def get_process_info():
-        return metrics.get_process_info(), 200
+
+        sort_by = request.args.get("sort-by")
+        if sort_by not in (None, "cpu", "memory"):
+            return {"error": "sort-by must be 'cpu' or 'memory'"}, 400
+
+        raw_limit = request.args.get("limit")
+        limit = None
+
+        if raw_limit is not None:
+            try:
+                limit = int(raw_limit)
+            except ValueError:
+                return {"error": "limit must be a positive integer"}, 400
+
+            if limit <= 0:
+                return {"error": "limit must be a positive integer"}, 400
+
+        return metrics.get_process_info(sort_by, limit), 200
+

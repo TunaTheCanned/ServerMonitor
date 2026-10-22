@@ -1,7 +1,5 @@
 from collections import namedtuple
-
 from app import metrics
-
 
 def test_temperature_not_supported(monkeypatch):
     monkeypatch.delattr(metrics.psutil,"sensors_temperatures",raising=False)
