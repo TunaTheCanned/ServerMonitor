@@ -1,7 +1,14 @@
-import os
 import psutil
 import platform
 
+#HEALTH
+def health_check():
+    db_status = "healthy"
+    status = "healthy" if db_status == "healthy" else "unhealthy"
+    return {"overall": status, "database": db_status}
+
+
+#CPU
 def get_cpu_usage_metrics(is_per_cpu):
     if is_per_cpu:
         data = psutil.cpu_percent(interval=0.1, percpu=True)
@@ -12,22 +19,6 @@ def get_cpu_usage_metrics(is_per_cpu):
     else:
         return {"cpu_percent" : psutil.cpu_percent(interval=0.1, percpu=False)}
 
-def get_cores(is_logical):
-    return {"cores" : psutil.cpu_count(logical=is_logical)}
-
-def get_memory():
-    return psutil.virtual_memory()._asdict()
-
-def get_disk():
-    payload = {}
-    for partition in psutil.disk_partitions():
-        try:
-            usage = psutil.disk_usage(partition.mountpoint)
-            payload[partition.mountpoint] = usage._asdict()
-        except (PermissionError, OSError):
-            continue
-    return payload
-
 def get_cpu_times():
     data = psutil.cpu_times(percpu=True)
     payload = {}
@@ -36,9 +27,7 @@ def get_cpu_times():
     return payload
 
 def get_hardware_temperature():
-    if not hasattr(psutil, "sensors_temperatures"):
-        return { "available" : False, "reason" : "Not supported on this OS" }
-    elif hasattr(psutil, "sensors_temperatures"):
+    if hasattr(psutil, "sensors_temperatures"):
         try:
             data = psutil.sensors_temperatures(fahrenheit=False)
         except (PermissionError, OSError, RuntimeError) as e:
@@ -55,18 +44,34 @@ def get_hardware_temperature():
         return {"available" : False, "reason" : "Not supported on this OS" }
 
 
+#RAM
+def get_memory():
+    return psutil.virtual_memory()._asdict()
+
+
+#DISK
+def get_disk():
+    payload = {}
+    for partition in psutil.disk_partitions():
+        try:
+            usage = psutil.disk_usage(partition.mountpoint)
+            payload[partition.mountpoint] = usage._asdict()
+        except (PermissionError, OSError):
+            continue
+    return payload
+
+
+#CORES
+def get_cores(is_logical):
+    return {"cores" : psutil.cpu_count(logical=is_logical)}
+
+
+
+#SYSTEM
 def get_system_uptime():
     from datetime import datetime
-    boot_time = datetime.fromtimestamp(psutil.boot_time())
-    current_time = datetime.now()
-    uptime = current_time - boot_time
-    total_seconds = int(uptime.total_seconds())
-    days = total_seconds // 86400
-    hours = (total_seconds % 86400) // 3600
-    minutes = (total_seconds % 3600) // 60
-    seconds = total_seconds % 60
-    return {"uptime": f"{days}:{hours:02}:{minutes:02}:{seconds:02}"}
-
+    uptime_seconds = int(datetime.now().timestamp() - psutil.boot_time())
+    return {"uptime_seconds": uptime_seconds }
 
 def get_load():
     load_1, load_5, load_15 = psutil.getloadavg()
@@ -74,24 +79,18 @@ def get_load():
                              "load_5" : load_5,
                              "load_15" : load_15}}
 
-
-def get_network_io_stats():
-    return psutil.net_io_counters(False, True)._asdict()
-
-
 def get_system_info():
     return {"system": platform.system(),
             "version": platform.version(),
             "architecture": platform.machine()}
 
 
-def health_check():
-    db_status = "healthy"
-    status = "healthy" if db_status == "healthy" else "unhealthy"
-    return ({"overall": status,
-            "database": db_status})
+#NETWORK
+def get_network_io_stats():
+    return psutil.net_io_counters(False, True)._asdict()
 
 
+#PROCESS
 def get_process_info():
     payload = {}
     for process in psutil.process_iter(['pid', 'name', 'status', 'memory_info'], ad_value=None):
