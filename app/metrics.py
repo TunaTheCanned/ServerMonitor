@@ -125,7 +125,7 @@ def get_process_info(sort_by, limit):
             payload = [process for process in payload if process['pid'] != 0]
         payload.sort(key=lambda x: x['cpu_percent'], reverse=True)
     elif sort_by=='memory':
-        payload.sort(key=lambda process: (process["rss_bytes"] if process["rss_bytes"] is not None else -1), reverse=True,)
+        payload.sort(key=lambda process: (process["rss_bytes"] if process["rss_bytes"] is not None else -1), reverse=True)
     if limit is not None:
         payload = payload[:limit]
 
