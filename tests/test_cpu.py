@@ -22,6 +22,7 @@ def test_cpu_times(client):
 def test_cpu_times_json_structure(client):
     response = client.get('/api/v1/cpu-usage?per-cpu=true')
     data = response.get_json()
+    assert response.status_code == 200
     assert data is not None
     for cpu, stats in data.items():
         assert 'percent' in stats

@@ -28,7 +28,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install waitress
-waitress-serve --host 0.0.0.0 --port 5000 --call app:create_apps
+waitress-serve --host 0.0.0.0 --port 5000 --call app:create_app
 ```
 
 Waitress keeps running in the foreground. Press `Ctrl+C` to stop it.
